@@ -5,26 +5,32 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"os"
 
 	"github.com/drone/drone-amazon-secrets/plugin"
-	"github.com/drone/drone-amazon-secrets/secret"
+	"github.com/drone/drone-go/plugin/secret"
 
 	"github.com/apex/gateway"
 	"github.com/aws/aws-sdk-go-v2/aws/external"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
+	"github.com/sirupsen/logrus"
+
+	_ "github.com/joho/godotenv/autoload"
 )
 
 var (
-	addr = os.Getenv("SERVER_ADDR")
-	key  = os.Getenv("SECRET_KEY")
+	debug = os.Getenv("DEBUG") == "true"
+	addr  = os.Getenv("SERVER_ADDR")
+	key   = os.Getenv("SECRET_KEY")
 )
 
 func main() {
+	if debug {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
 	if key == "" {
-		log.Fatalln("fatal: missing secret key")
+		logrus.Fatalln("missing secret key")
 	}
 	if addr == "" {
 		addr = ":3000"
@@ -32,18 +38,17 @@ func main() {
 
 	cfg, err := external.LoadDefaultAWSConfig()
 	if err != nil {
-		log.Fatalln(err)
+		logrus.Fatalln(err)
 	}
 
 	handler := secret.Handler(
 		key,
-		plugin.New(
-			secretsmanager.New(cfg),
-		),
+		plugin.New(secretsmanager.New(cfg)),
+		logrus.StandardLogger(),
 	)
 
-	log.Printf("server listening on address %s", addr)
+	logrus.Printf("server listening on address %s", addr)
 
 	http.Handle("/", handler)
-	log.Fatal(gateway.ListenAndServe(addr, nil))
+	logrus.Fatal(gateway.ListenAndServe(addr, nil))
 }

@@ -5,17 +5,21 @@
 package plugin
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
-	"github.com/drone/drone-amazon-secrets/secret"
-	"github.com/google/go-cmp/cmp"
+	"github.com/drone/drone-go/drone"
+	"github.com/drone/drone-go/plugin/secret"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/defaults"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
+	"github.com/google/go-cmp/cmp"
 	"github.com/h2non/gock"
 )
+
+var noContext = context.Background()
 
 func TestPlugin(t *testing.T) {
 	defer gock.Off()
@@ -41,21 +45,21 @@ func TestPlugin(t *testing.T) {
 	manager := secretsmanager.New(config)
 	req := &secret.Request{
 		Name: "docker#username",
-		Build: secret.Build{
+		Build: drone.Build{
 			Event: "push",
 		},
-		Repo: secret.Repo{
+		Repo: drone.Repo{
 			Slug: "octocat/hello-world",
 		},
 	}
 	plugin := New(manager)
-	got, err := plugin.Handle(req)
+	got, err := plugin.Find(noContext, req)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	want := &secret.Response{
+	want := &drone.Secret{
 		Name: "username",
 		Data: "david",
 		Pull: true,
@@ -96,15 +100,15 @@ func TestPlugin_FilterRepo(t *testing.T) {
 	manager := secretsmanager.New(config)
 	req := &secret.Request{
 		Name: "docker#username",
-		Build: secret.Build{
+		Build: drone.Build{
 			Event: "push",
 		},
-		Repo: secret.Repo{
+		Repo: drone.Repo{
 			Slug: "spaceghost/hello-world",
 		},
 	}
 	plugin := New(manager)
-	_, err := plugin.Handle(req)
+	_, err := plugin.Find(noContext, req)
 	if err == nil {
 		t.Errorf("Expect error")
 		return
@@ -144,15 +148,15 @@ func TestPlugin_FilterEvent(t *testing.T) {
 	manager := secretsmanager.New(config)
 	req := &secret.Request{
 		Name: "docker#username",
-		Build: secret.Build{
+		Build: drone.Build{
 			Event: "pull_request",
 		},
-		Repo: secret.Repo{
+		Repo: drone.Repo{
 			Slug: "octocat/hello-world",
 		},
 	}
 	plugin := New(manager)
-	_, err := plugin.Handle(req)
+	_, err := plugin.Find(noContext, req)
 	if err == nil {
 		t.Errorf("Expect error")
 		return
@@ -172,7 +176,7 @@ func TestPlugin_InvalidName(t *testing.T) {
 	req := &secret.Request{
 		Name: "secrets/docker/username",
 	}
-	_, err := New(nil).Handle(req)
+	_, err := New(nil).Find(noContext, req)
 	if err == nil {
 		t.Errorf("Expect invalid path error")
 		return
@@ -205,15 +209,15 @@ func TestPlugin_NotFound(t *testing.T) {
 	manager := secretsmanager.New(config)
 	req := &secret.Request{
 		Name: "docker#username",
-		Build: secret.Build{
+		Build: drone.Build{
 			Event: "pull_request",
 		},
-		Repo: secret.Repo{
+		Repo: drone.Repo{
 			Slug: "octocat/hello-world",
 		},
 	}
 	plugin := New(manager)
-	_, err := plugin.Handle(req)
+	_, err := plugin.Find(noContext, req)
 	if err == nil {
 		t.Errorf("Expect error")
 		return

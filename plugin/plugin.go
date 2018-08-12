@@ -5,11 +5,13 @@
 package plugin
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"strings"
 
-	"github.com/drone/drone-amazon-secrets/secret"
+	"github.com/drone/drone-go/drone"
+	"github.com/drone/drone-go/plugin/secret"
 
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/aws/aws-sdk-go/aws"
@@ -27,7 +29,7 @@ type plugin struct {
 	manager *secretsmanager.SecretsManager
 }
 
-func (p *plugin) Handle(req *secret.Request) (*secret.Response, error) {
+func (p *plugin) Find(ctx context.Context, req *secret.Request) (*drone.Secret, error) {
 	// drone requests the secret name in secret:key format.
 	// Extract the secret and key from the string.
 	parts := strings.Split(req.Name, "#")
@@ -61,7 +63,7 @@ func (p *plugin) Handle(req *secret.Request) (*secret.Response, error) {
 		return nil, errors.New("access denied: repository does not match")
 	}
 
-	return &secret.Response{
+	return &drone.Secret{
 		Name: name,
 		Data: value,
 		Pull: true, // always true. use X-Drone-Events to prevent pull requests.
