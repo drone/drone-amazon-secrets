@@ -44,7 +44,8 @@ func TestPlugin(t *testing.T) {
 
 	manager := secretsmanager.New(config)
 	req := &secret.Request{
-		Name: "docker#username",
+		Path: "docker",
+		Name: "username",
 		Build: drone.Build{
 			Event: "push",
 		},
@@ -60,7 +61,6 @@ func TestPlugin(t *testing.T) {
 	}
 
 	want := &drone.Secret{
-		Name: "username",
 		Data: "david",
 		Pull: true,
 		Fork: true,
@@ -99,7 +99,8 @@ func TestPlugin_FilterRepo(t *testing.T) {
 
 	manager := secretsmanager.New(config)
 	req := &secret.Request{
-		Name: "docker#username",
+		Path: "docker",
+		Name: "username",
 		Build: drone.Build{
 			Event: "push",
 		},
@@ -147,7 +148,8 @@ func TestPlugin_FilterEvent(t *testing.T) {
 
 	manager := secretsmanager.New(config)
 	req := &secret.Request{
-		Name: "docker#username",
+		Path: "docker",
+		Name: "username",
 		Build: drone.Build{
 			Event: "pull_request",
 		},
@@ -172,16 +174,32 @@ func TestPlugin_FilterEvent(t *testing.T) {
 	}
 }
 
-func TestPlugin_InvalidName(t *testing.T) {
+func TestPlugin_InvalidPath(t *testing.T) {
 	req := &secret.Request{
-		Name: "secrets/docker/username",
+		Path: "",
+		Name: "username",
 	}
 	_, err := New(nil).Find(noContext, req)
 	if err == nil {
 		t.Errorf("Expect invalid path error")
 		return
 	}
-	if got, want := err.Error(), "invalid or missing secret key"; got != want {
+	if got, want := err.Error(), "invalid or missing secret path"; got != want {
+		t.Errorf("Want error message %s, got %s", want, got)
+	}
+}
+
+func TestPlugin_InvalidName(t *testing.T) {
+	req := &secret.Request{
+		Path: "docker",
+		Name: "",
+	}
+	_, err := New(nil).Find(noContext, req)
+	if err == nil {
+		t.Errorf("Expect invalid path error")
+		return
+	}
+	if got, want := err.Error(), "invalid or missing secret name"; got != want {
 		t.Errorf("Want error message %s, got %s", want, got)
 	}
 }
@@ -208,7 +226,8 @@ func TestPlugin_NotFound(t *testing.T) {
 
 	manager := secretsmanager.New(config)
 	req := &secret.Request{
-		Name: "docker#username",
+		Path: "docker",
+		Name: "username",
 		Build: drone.Build{
 			Event: "pull_request",
 		},

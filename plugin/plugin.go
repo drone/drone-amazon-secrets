@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"strings"
 
 	"github.com/drone/drone-go/drone"
 	"github.com/drone/drone-go/plugin/secret"
@@ -30,22 +29,20 @@ type plugin struct {
 }
 
 func (p *plugin) Find(ctx context.Context, req *secret.Request) (*drone.Secret, error) {
-	// drone requests the secret name in secret:key format.
-	// Extract the secret and key from the string.
-	parts := strings.Split(req.Name, "#")
-	if len(parts) != 2 {
-		return nil, errors.New("invalid or missing secret key")
+	if req.Path == "" {
+		return nil, errors.New("invalid or missing secret path")
 	}
-	path := parts[0]
-	name := parts[1]
+	if req.Name == "" {
+		return nil, errors.New("invalid or missing secret name")
+	}
 
 	// makes an api call to the aws secrets manager and attempts
 	// to retrieve the secret at the requested path.
-	params, err := p.find(path)
+	params, err := p.find(req.Path)
 	if err != nil {
 		return nil, errors.New("secret not found")
 	}
-	value := params[name]
+	value := params[req.Name]
 
 	// the user can filter out requets based on event type
 	// using the X-Drone-Events secret key. Check for this
@@ -64,7 +61,6 @@ func (p *plugin) Find(ctx context.Context, req *secret.Request) (*drone.Secret, 
 	}
 
 	return &drone.Secret{
-		Name: name,
 		Data: value,
 		Pull: true, // always true. use X-Drone-Events to prevent pull requests.
 		Fork: true, // always true. use X-Drone-Events to prevent pull requests.

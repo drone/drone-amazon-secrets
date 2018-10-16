@@ -1,1 +1,5 @@
+release
+vendor
 .env
+*.sh
+*.zip
