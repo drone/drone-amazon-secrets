@@ -27,3 +27,5 @@ release/
 vendor/
 
 coverage.out
+.env
+drone-amazon-secrets
