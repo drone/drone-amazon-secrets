@@ -3,19 +3,25 @@ module github.com/drone/drone-amazon-secrets
 go 1.12
 
 require (
-	github.com/99designs/httpsignatures-go v0.0.0-20170731043157-88528bf4ca7e
 	github.com/apex/gateway v1.1.1
-	github.com/aws/aws-lambda-go v1.6.0
+	github.com/aws/aws-lambda-go v1.6.0 // indirect
 	github.com/aws/aws-sdk-go v1.15.16
 	github.com/aws/aws-sdk-go-v2 v2.0.0-preview.4+incompatible
 	github.com/drone/drone-go v1.0.1
-	github.com/go-ini/ini v1.38.1
+	github.com/go-ini/ini v1.38.1 // indirect
 	github.com/google/go-cmp v0.2.0
 	github.com/h2non/gock v1.0.9
-	github.com/jmespath/go-jmespath v0.0.0-20160202185014-0b12d6b521d8
 	github.com/joho/godotenv v1.2.0
-	github.com/pkg/errors v0.8.0
+	github.com/nbio/st v0.0.0-20140626010706-e9e8d9816f32 // indirect
+	github.com/onsi/ginkgo v1.8.0 // indirect
+	github.com/onsi/gomega v1.5.0 // indirect
+	github.com/pkg/errors v0.8.0 // indirect
 	github.com/sirupsen/logrus v1.0.6
-	golang.org/x/crypto v0.0.0-20180820150726-614d502a4dac
-	golang.org/x/sys v0.0.0-20180820145501-1a700e749ce2
+	github.com/smartystreets/goconvey v0.0.0-20190306220146-200a235640ff // indirect
+	github.com/stretchr/testify v1.3.0 // indirect
+	github.com/tj/assert v0.0.0-20171129193455-018094318fb0 // indirect
+	golang.org/x/net v0.0.0-20190320064053-1272bf9dcd53 // indirect
+	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
+	gopkg.in/gemnasium/logrus-airbrake-hook.v2 v2.1.2 // indirect
+	gopkg.in/ini.v1 v1.42.0 // indirect
 )

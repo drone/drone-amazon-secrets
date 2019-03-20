@@ -11,6 +11,7 @@ import (
 	"github.com/drone/drone-amazon-secrets/plugin"
 	"github.com/drone/drone-go/plugin/secret"
 
+	"github.com/aws/aws-sdk-go-v2/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go-v2/aws/external"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/sirupsen/logrus"
@@ -38,6 +39,16 @@ func main() {
 	cfg, err := external.LoadDefaultAWSConfig()
 	if err != nil {
 		logrus.Fatalln(err)
+	}
+
+	if cfg.Region == "" {
+		metaClient := ec2metadata.New(cfg)
+		if region, err := metaClient.Region(); err == nil {
+			cfg.Region = region
+			logrus.Infof("using region %s from ec2 metadata", cfg.Region)
+		} else {
+			logrus.Fatalf("failed to determine region: %s", err)
+		}
 	}
 
 	handler := secret.Handler(
