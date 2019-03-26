@@ -13,15 +13,15 @@ steps:
   - go test -v -cover ./...
   - CGO_ENABLED=0 go build -o release/linux/amd64/drone-amazon-secrets github.com/drone/drone-amazon-secrets/cmd/drone-amazon-secrets
 
-- name: publish
-  image: plugins/docker
-  settings:
-    auto_tag: true
-    dockerfile: docker/Dockerfile
-    password:
-      from_secret: docker_password
-    repo: drone/amazon-secrets
-    username:
-      from_secret: docker_username
+# - name: publish
+#   image: plugins/docker
+#   settings:
+#     auto_tag: true
+#     dockerfile: docker/Dockerfile
+#     password:
+#       from_secret: docker_password
+#     repo: drone/amazon-secrets
+#     username:
+#       from_secret: docker_username
 
 ...

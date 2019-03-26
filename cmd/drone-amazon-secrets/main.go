@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/drone/drone-amazon-secrets/plugin"
+	"github.com/drone/drone-amazon-secrets/server"
 	"github.com/drone/drone-go/plugin/secret"
 
 	"github.com/aws/aws-sdk-go-v2/aws/ec2metadata"
@@ -56,9 +57,11 @@ func main() {
 		plugin.New(secretsmanager.New(cfg)),
 		logrus.StandardLogger(),
 	)
+	healthzHandler := server.HandleHealthz()
 
 	logrus.Infof("server listening on address %s", addr)
 
 	http.Handle("/", handler)
+	http.Handle("/healthz",healthzHandler)
 	logrus.Fatal(http.ListenAndServe(addr, nil))
 }
