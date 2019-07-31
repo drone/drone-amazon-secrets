@@ -8,23 +8,17 @@ platform:
 
 steps:
 - name: vet
-  pull: always
-  image: golang:1.11
+  image: golang:1.12
   commands:
   - go vet ./...
-  environment:
-    GO111MODULE: on
   volumes:
   - name: gopath
     path: /go
 
 - name: test
-  pull: always
-  image: golang:1.11
+  image: golang:1.12
   commands:
   - go test -cover ./...
-  environment:
-    GO111MODULE: on
   volumes:
   - name: gopath
     path: /go
@@ -49,19 +43,15 @@ platform:
 
 steps:
 - name: build
-  pull: always
-  image: golang:1.11
+  image: golang:1.12
   commands:
   - go build -v -a -tags netgo -o release/linux/amd64/drone-amazon-secrets ./cmd/drone-amazon-secrets
   environment:
     CGO_ENABLED: 0
-    GO111MODULE: on
 
 - name: dryrun
-  pull: always
   image: plugins/docker:linux-amd64
   settings:
-    daemon_off: false
     dockerfile: docker/Dockerfile.linux.amd64
     dry_run: true
     password:
@@ -75,12 +65,10 @@ steps:
     - pull_request
 
 - name: publish
-  pull: always
   image: plugins/docker:linux-amd64
   settings:
     auto_tag: true
     auto_tag_suffix: linux-amd64
-    daemon_off: false
     dockerfile: docker/Dockerfile.linux.amd64
     password:
       from_secret: docker_password
@@ -93,8 +81,7 @@ steps:
       - pull_request
 
 - name: tarball
-  pull: always
-  image: golang:1.11
+  image: golang:1.12
   commands:
   - tar -cvzf release/drone-amazon-secrets_linux_amd64.tar.gz -C release/linux/amd64 drone-amazon-secrets
   - sha256sum release/drone-amazon-secrets_linux_amd64.tar.gz > release/drone-amazon-secrets_linux_amd64.tar.gz.sha256
@@ -103,7 +90,6 @@ steps:
     - tag
 
 - name: gpgsign
-  pull: always
   image: plugins/gpgsign
   settings:
     files:
@@ -118,7 +104,6 @@ steps:
     - tag
 
 - name: github
-  pull: always
   image: plugins/github-release
   settings:
     files:
@@ -150,19 +135,15 @@ platform:
 
 steps:
 - name: build
-  pull: always
-  image: golang:1.11
+  image: golang:1.12
   commands:
   - go build -v -a -tags netgo -o release/linux/arm64/drone-amazon-secrets ./cmd/drone-amazon-secrets
   environment:
     CGO_ENABLED: 0
-    GO111MODULE: on
 
 - name: dryrun
-  pull: always
   image: plugins/docker:linux-arm64
   settings:
-    daemon_off: false
     dockerfile: docker/Dockerfile.linux.arm64
     dry_run: true
     password:
@@ -176,12 +157,10 @@ steps:
     - pull_request
 
 - name: publish
-  pull: always
   image: plugins/docker:linux-arm64
   settings:
     auto_tag: true
     auto_tag_suffix: linux-arm64
-    daemon_off: false
     dockerfile: docker/Dockerfile.linux.arm64
     password:
       from_secret: docker_password
@@ -194,8 +173,7 @@ steps:
       - pull_request
 
 - name: tarball
-  pull: always
-  image: golang:1.11
+  image: golang:1.12
   commands:
   - tar -cvzf release/drone-amazon-secrets_linux_arm64.tar.gz -C release/linux/arm64 drone-amazon-secrets
   - sha256sum release/drone-amazon-secrets_linux_arm64.tar.gz > release/drone-amazon-secrets_linux_arm64.tar.gz.sha256
@@ -204,7 +182,6 @@ steps:
     - tag
 
 - name: gpgsign
-  pull: always
   image: plugins/gpgsign
   settings:
     files:
@@ -219,7 +196,6 @@ steps:
     - tag
 
 - name: github
-  pull: always
   image: plugins/github-release
   settings:
     files:
@@ -251,19 +227,15 @@ platform:
 
 steps:
 - name: build
-  pull: always
-  image: golang:1.11
+  image: golang:1.12
   commands:
   - go build -v -a -tags netgo -o release/linux/arm/drone-amazon-secrets ./cmd/drone-amazon-secrets
   environment:
     CGO_ENABLED: 0
-    GO111MODULE: on
 
 - name: dryrun
-  pull: always
   image: plugins/docker:linux-arm
   settings:
-    daemon_off: false
     dockerfile: docker/Dockerfile.linux.arm
     dry_run: true
     password:
@@ -277,12 +249,10 @@ steps:
     - pull_request
 
 - name: publish
-  pull: always
   image: plugins/docker:linux-arm
   settings:
     auto_tag: true
     auto_tag_suffix: linux-arm
-    daemon_off: false
     dockerfile: docker/Dockerfile.linux.arm
     password:
       from_secret: docker_password
@@ -295,8 +265,7 @@ steps:
       - pull_request
 
 - name: tarball
-  pull: always
-  image: golang:1.11
+  image: golang:1.12
   commands:
   - tar -cvzf release/drone-amazon-secrets_linux_arm.tar.gz -C release/linux/arm drone-amazon-secrets
   - sha256sum release/drone-amazon-secrets_linux_arm.tar.gz > release/drone-amazon-secrets_linux_arm.tar.gz.sha256
@@ -305,7 +274,6 @@ steps:
     - tag
 
 - name: gpgsign
-  pull: always
   image: plugins/gpgsign
   settings:
     files:
@@ -320,7 +288,6 @@ steps:
     - tag
 
 - name: github
-  pull: always
   image: plugins/github-release
   settings:
     files:
@@ -352,8 +319,7 @@ platform:
 
 steps:
 - name: manifest
-  pull: always
-  image: plugins/manifest
+  image: plugins/manifest:latest
   settings:
     ignore_missing: true
     password:
@@ -363,7 +329,6 @@ steps:
       from_secret: docker_username
 
 - name: microbadger
-  pull: always
   image: plugins/webhook
   settings:
     url:

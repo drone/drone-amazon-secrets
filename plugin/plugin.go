@@ -18,14 +18,14 @@ import (
 
 // New returns a new secret plugin that sources secrets
 // from the AWS secrets manager.
-func New(manager *secretsmanager.SecretsManager) secret.Plugin {
+func New(manager *secretsmanager.Client) secret.Plugin {
 	return &plugin{
 		manager: manager,
 	}
 }
 
 type plugin struct {
-	manager *secretsmanager.SecretsManager
+	manager *secretsmanager.Client
 }
 
 func (p *plugin) Find(ctx context.Context, req *secret.Request) (*drone.Secret, error) {
@@ -38,7 +38,7 @@ func (p *plugin) Find(ctx context.Context, req *secret.Request) (*drone.Secret, 
 
 	// makes an api call to the aws secrets manager and attempts
 	// to retrieve the secret at the requested path.
-	params, err := p.find(req.Path)
+	params, err := p.find(ctx, req.Path)
 	if err != nil {
 		return nil, errors.New("secret not found")
 	}
@@ -68,13 +68,13 @@ func (p *plugin) Find(ctx context.Context, req *secret.Request) (*drone.Secret, 
 }
 
 // helper function returns the secret from the aws secrets manager.
-func (p *plugin) find(path string) (map[string]string, error) {
+func (p *plugin) find(ctx context.Context, path string) (map[string]string, error) {
 	req := p.manager.GetSecretValueRequest(
 		&secretsmanager.GetSecretValueInput{
 			SecretId: aws.String(path),
 		},
 	)
-	res, err := req.Send()
+	res, err := req.Send(ctx)
 	if err != nil {
 		return nil, err
 	}
