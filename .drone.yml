@@ -1,27 +1,347 @@
 ---
 kind: pipeline
-name: default
+name: testing
 
 platform:
   os: linux
   arch: amd64
 
 steps:
+- name: vet
+  image: golang:1.12
+  commands:
+  - go vet ./...
+  volumes:
+  - name: gopath
+    path: /go
+
 - name: test
   image: golang:1.12
   commands:
-  - go test -v -cover ./...
-  - CGO_ENABLED=0 go build -o release/linux/amd64/drone-amazon-secrets github.com/drone/drone-amazon-secrets/cmd/drone-amazon-secrets
+  - go test -cover ./...
+  volumes:
+  - name: gopath
+    path: /go
+
+volumes:
+- name: gopath
+  temp: {}
+
+trigger:
+  ref:
+  - refs/heads/master
+  - refs/tags/**
+  - refs/pull/**
+
+---
+kind: pipeline
+name: linux-amd64
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: build
+  image: golang:1.12
+  commands:
+  - go build -v -a -tags netgo -o release/linux/amd64/drone-amazon-secrets ./cmd/drone-amazon-secrets
+  environment:
+    CGO_ENABLED: 0
+
+- name: dryrun
+  image: plugins/docker:linux-amd64
+  settings:
+    dockerfile: docker/Dockerfile.linux.amd64
+    dry_run: true
+    password:
+      from_secret: docker_password
+    repo: drone/amazon-secrets
+    tags: linux-amd64
+    username:
+      from_secret: docker_username
+  when:
+    event:
+    - pull_request
 
 - name: publish
-  image: plugins/docker
+  image: plugins/docker:linux-amd64
   settings:
     auto_tag: true
-    dockerfile: docker/Dockerfile
+    auto_tag_suffix: linux-amd64
+    dockerfile: docker/Dockerfile.linux.amd64
     password:
       from_secret: docker_password
     repo: drone/amazon-secrets
     username:
       from_secret: docker_username
+  when:
+    event:
+      exclude:
+      - pull_request
+
+- name: tarball
+  image: golang:1.12
+  commands:
+  - tar -cvzf release/drone-amazon-secrets_linux_amd64.tar.gz -C release/linux/amd64 drone-amazon-secrets
+  - sha256sum release/drone-amazon-secrets_linux_amd64.tar.gz > release/drone-amazon-secrets_linux_amd64.tar.gz.sha256
+  when:
+    event:
+    - tag
+
+- name: gpgsign
+  image: plugins/gpgsign
+  settings:
+    files:
+    - release/*.tar.gz
+    - release/*.tar.gz.sha256
+    key:
+      from_secret: gpgsign_key
+    passphrase:
+      from_secret: gpgkey_passphrase
+  when:
+    event:
+    - tag
+
+- name: github
+  image: plugins/github-release
+  settings:
+    files:
+    - release/*.tar.gz
+    - release/*.tar.gz.sha256
+    - release/*.tar.gz.asc
+    token:
+      from_secret: github_token
+  when:
+    event:
+    - tag
+
+trigger:
+  ref:
+  - refs/heads/master
+  - refs/tags/**
+  - refs/pull/**
+
+depends_on:
+- testing
+
+---
+kind: pipeline
+name: linux-arm64
+
+platform:
+  os: linux
+  arch: arm64
+
+steps:
+- name: build
+  image: golang:1.12
+  commands:
+  - go build -v -a -tags netgo -o release/linux/arm64/drone-amazon-secrets ./cmd/drone-amazon-secrets
+  environment:
+    CGO_ENABLED: 0
+
+- name: dryrun
+  image: plugins/docker:linux-arm64
+  settings:
+    dockerfile: docker/Dockerfile.linux.arm64
+    dry_run: true
+    password:
+      from_secret: docker_password
+    repo: drone/amazon-secrets
+    tags: linux-arm64
+    username:
+      from_secret: docker_username
+  when:
+    event:
+    - pull_request
+
+- name: publish
+  image: plugins/docker:linux-arm64
+  settings:
+    auto_tag: true
+    auto_tag_suffix: linux-arm64
+    dockerfile: docker/Dockerfile.linux.arm64
+    password:
+      from_secret: docker_password
+    repo: drone/amazon-secrets
+    username:
+      from_secret: docker_username
+  when:
+    event:
+      exclude:
+      - pull_request
+
+- name: tarball
+  image: golang:1.12
+  commands:
+  - tar -cvzf release/drone-amazon-secrets_linux_arm64.tar.gz -C release/linux/arm64 drone-amazon-secrets
+  - sha256sum release/drone-amazon-secrets_linux_arm64.tar.gz > release/drone-amazon-secrets_linux_arm64.tar.gz.sha256
+  when:
+    event:
+    - tag
+
+- name: gpgsign
+  image: plugins/gpgsign
+  settings:
+    files:
+    - release/*.tar.gz
+    - release/*.tar.gz.sha256
+    key:
+      from_secret: gpgsign_key
+    passphrase:
+      from_secret: gpgkey_passphrase
+  when:
+    event:
+    - tag
+
+- name: github
+  image: plugins/github-release
+  settings:
+    files:
+    - release/*.tar.gz
+    - release/*.tar.gz.sha256
+    - release/*.tar.gz.asc
+    token:
+      from_secret: github_token
+  when:
+    event:
+    - tag
+
+trigger:
+  ref:
+  - refs/heads/master
+  - refs/tags/**
+  - refs/pull/**
+
+depends_on:
+- testing
+
+---
+kind: pipeline
+name: linux-arm
+
+platform:
+  os: linux
+  arch: arm
+
+steps:
+- name: build
+  image: golang:1.12
+  commands:
+  - go build -v -a -tags netgo -o release/linux/arm/drone-amazon-secrets ./cmd/drone-amazon-secrets
+  environment:
+    CGO_ENABLED: 0
+
+- name: dryrun
+  image: plugins/docker:linux-arm
+  settings:
+    dockerfile: docker/Dockerfile.linux.arm
+    dry_run: true
+    password:
+      from_secret: docker_password
+    repo: drone/amazon-secrets
+    tags: linux-arm
+    username:
+      from_secret: docker_username
+  when:
+    event:
+    - pull_request
+
+- name: publish
+  image: plugins/docker:linux-arm
+  settings:
+    auto_tag: true
+    auto_tag_suffix: linux-arm
+    dockerfile: docker/Dockerfile.linux.arm
+    password:
+      from_secret: docker_password
+    repo: drone/amazon-secrets
+    username:
+      from_secret: docker_username
+  when:
+    event:
+      exclude:
+      - pull_request
+
+- name: tarball
+  image: golang:1.12
+  commands:
+  - tar -cvzf release/drone-amazon-secrets_linux_arm.tar.gz -C release/linux/arm drone-amazon-secrets
+  - sha256sum release/drone-amazon-secrets_linux_arm.tar.gz > release/drone-amazon-secrets_linux_arm.tar.gz.sha256
+  when:
+    event:
+    - tag
+
+- name: gpgsign
+  image: plugins/gpgsign
+  settings:
+    files:
+    - release/*.tar.gz
+    - release/*.tar.gz.sha256
+    key:
+      from_secret: gpgsign_key
+    passphrase:
+      from_secret: gpgkey_passphrase
+  when:
+    event:
+    - tag
+
+- name: github
+  image: plugins/github-release
+  settings:
+    files:
+    - release/*.tar.gz
+    - release/*.tar.gz.sha256
+    - release/*.tar.gz.asc
+    token:
+      from_secret: github_token
+  when:
+    event:
+    - tag
+
+trigger:
+  ref:
+  - refs/heads/master
+  - refs/tags/**
+  - refs/pull/**
+
+depends_on:
+- testing
+
+---
+kind: pipeline
+name: notifications
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: manifest
+  image: plugins/manifest:latest
+  settings:
+    ignore_missing: true
+    password:
+      from_secret: docker_password
+    spec: docker/manifest.tmpl
+    username:
+      from_secret: docker_username
+
+- name: microbadger
+  image: plugins/webhook
+  settings:
+    url:
+      from_secret: microbadger_url
+
+trigger:
+  ref:
+  - refs/heads/master
+  - refs/tags/**
+
+depends_on:
+- linux-amd64
+- linux-arm64
+- linux-arm
 
 ...

@@ -1,5 +1,4 @@
-release
-vendor
-.env
-*.sh
-*.zip
+coverage.out
+
+/release/
+/drone-amazon-secrets
