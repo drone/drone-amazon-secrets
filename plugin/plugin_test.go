@@ -47,7 +47,8 @@ func TestPlugin(t *testing.T) {
 		Path: "docker",
 		Name: "username",
 		Build: drone.Build{
-			Event: "push",
+			Event:  "push",
+			Target: "master",
 		},
 		Repo: drone.Repo{
 			Slug: "octocat/hello-world",
@@ -73,6 +74,48 @@ func TestPlugin(t *testing.T) {
 	if gock.IsPending() {
 		t.Errorf("Unfinished requests")
 		return
+	}
+}
+
+func TestPlugin_FilterBranches(t *testing.T) {
+	gock.New("https://ec2.us-east-1.amazonaws.com").
+		Post("/").
+		MatchHeader("Content-Type", "application/x-amz-json-1.1").
+		MatchHeader("X-Amz-Target", "secretsmanager.GetSecretValue").
+		Reply(200).
+		File("testdata/secret.json")
+
+	client := &http.Client{Transport: &http.Transport{}}
+	gock.InterceptClient(client)
+
+	config := defaults.Config()
+	config.HTTPClient = client
+	config.Region = "us-east-1"
+	config.EndpointResolver = aws.ResolveWithEndpoint(aws.Endpoint{
+		URL:           "https://ec2.us-east-1.amazonaws.com",
+		SigningRegion: config.Region,
+	})
+
+	manager := secretsmanager.New(config)
+	req := &secret.Request{
+		Path: "secret/docker",
+		Name: "username",
+		Build: drone.Build{
+			Event:  "push",
+			Target: "development",
+		},
+		Repo: drone.Repo{
+			Slug: "octocat/hello-world",
+		},
+	}
+	plugin := New(manager)
+	_, err := plugin.Find(noContext, req)
+	if err == nil {
+		t.Errorf("Expect error")
+		return
+	}
+	if want, got := err.Error(), "access denied: branch does not match"; got != want {
+		t.Errorf("Want error %q, got %q", want, got)
 	}
 }
 
