@@ -7,6 +7,7 @@ package plugin
 import (
 	"context"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/drone/drone-go/drone"
@@ -284,7 +285,7 @@ func TestPlugin_NotFound(t *testing.T) {
 		t.Errorf("Expect error")
 		return
 	}
-	if want, got := err.Error(), "secret not found"; got != want {
+	if want, got := "secret not found", err.Error(); strings.Contains(want, got) {
 		t.Errorf("Want error %q, got %q", want, got)
 		return
 	}

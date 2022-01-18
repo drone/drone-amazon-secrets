@@ -4,11 +4,14 @@
 
 package plugin
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // helper function extracts the branch filters from the
 // secret payload in key value format.
-func extractBranches(params map[string]string) []string {
+func extractBranches(params map[string]interface{}) []string {
 	for key, value := range params {
 		if strings.EqualFold(key, "X-Drone-Branches") {
 			return parseCommaSeparated(value)
@@ -19,7 +22,7 @@ func extractBranches(params map[string]string) []string {
 
 // helper function extracts the repository filters from the
 // secret payload in key value format.
-func extractRepos(params map[string]string) []string {
+func extractRepos(params map[string]interface{}) []string {
 	for key, value := range params {
 		if strings.EqualFold(key, "X-Drone-Repos") {
 			return parseCommaSeparated(value)
@@ -30,7 +33,7 @@ func extractRepos(params map[string]string) []string {
 
 // helper function extracts the event filters from the
 // secret payload in key value format.
-func extractEvents(params map[string]string) []string {
+func extractEvents(params map[string]interface{}) []string {
 	for key, value := range params {
 		if strings.EqualFold(key, "X-Drone-Events") {
 			return parseCommaSeparated(value)
@@ -39,8 +42,9 @@ func extractEvents(params map[string]string) []string {
 	return nil
 }
 
-func parseCommaSeparated(s string) []string {
-	parts := strings.Split(s, ",")
+func parseCommaSeparated(s interface{}) []string {
+	str := fmt.Sprintf("%v", s)
+	parts := strings.Split(str, ",")
 	if len(parts) == 1 && parts[0] == "" {
 		return nil
 	}

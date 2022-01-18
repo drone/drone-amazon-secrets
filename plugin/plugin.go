@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/drone/drone-go/drone"
 	"github.com/drone/drone-go/plugin/secret"
@@ -40,7 +41,7 @@ func (p *plugin) Find(ctx context.Context, req *secret.Request) (*drone.Secret, 
 	// to retrieve the secret at the requested path.
 	params, err := p.find(req.Path)
 	if err != nil {
-		return nil, errors.New("secret not found")
+		return nil, err
 	}
 	value := params[req.Name]
 
@@ -70,14 +71,15 @@ func (p *plugin) Find(ctx context.Context, req *secret.Request) (*drone.Secret, 
 
 
 	return &drone.Secret{
-		Data: value,
+		Data: fmt.Sprintf("%v", value),
 		Pull: true, // always true. use X-Drone-Events to prevent pull requests.
 		Fork: true, // always true. use X-Drone-Events to prevent pull requests.
 	}, nil
 }
 
 // helper function returns the secret from the aws secrets manager.
-func (p *plugin) find(path string) (map[string]string, error) {
+func (p *plugin) find(path string) (map[string]interface{}, error) {
+	var set map[string]interface{}
 	req := p.manager.GetSecretValueRequest(
 		&secretsmanager.GetSecretValueInput{
 			SecretId: aws.String(path),
@@ -85,13 +87,13 @@ func (p *plugin) find(path string) (map[string]string, error) {
 	)
 	res, err := req.Send()
 	if err != nil {
-		return nil, err
+		return nil, errors.New(fmt.Sprintf("secret not found: %v", err))
 	}
 
 	str := aws.StringValue(res.SecretString)
 	raw := []byte(str)
 
-	set := map[string]string{}
+
 	err = json.Unmarshal(raw, &set)
 	return set, err
 }

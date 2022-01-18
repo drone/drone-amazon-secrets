@@ -9,6 +9,14 @@ import (
 	"testing"
 )
 
+func toInterface(testParams map[string]string) map[string]interface{}{
+	params := make(map[string]interface{}, len(testParams))
+	for k, v := range testParams {
+		params[k] = v
+	}
+	return params
+}
+
 func TestExtractBranches(t *testing.T) {
 	tests := []struct {
 		params   map[string]string
@@ -37,7 +45,8 @@ func TestExtractBranches(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		got, want := extractBranches(test.params), test.patterns
+		params := toInterface(test.params)
+		got, want := extractBranches(params), test.patterns
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("Unexpected results at %d", i)
 		}
@@ -72,7 +81,8 @@ func TestExtractRepos(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		got, want := extractRepos(test.params), test.patterns
+		params := toInterface(test.params)
+		got, want := extractRepos(params), test.patterns
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("Unexpected results at %d", i)
 		}
@@ -107,7 +117,8 @@ func TestExtractEvents(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		got, want := extractEvents(test.params), test.patterns
+		params := toInterface(test.params)
+		got, want := extractEvents(params), test.patterns
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("Unexpected results at %d", i)
 		}
